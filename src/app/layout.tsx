@@ -21,9 +21,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://pnb-pos.vercel.app"),
   title: "PNB-POS | Sistem Point of Sale",
   description: "Aplikasi kasir modern berbasis web dengan dukungan offline dan sinkronisasi real-time.",
   manifest: "/manifest.json",
+  openGraph: {
+    title: "PNB-POS | Sistem Point of Sale",
+    description: "Aplikasi kasir modern berbasis web dengan dukungan offline dan sinkronisasi real-time.",
+    url: "https://pnb-pos.vercel.app",
+    siteName: "PNB-POS",
+    locale: "id_ID",
+    type: "website",
+  },
 };
 
 export default async function RootLayout({
