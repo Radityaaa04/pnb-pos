@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛒 PNB POS - Modern Point of Sale System
 
-## Getting Started
+PNB POS is a modern, fast, and feature-rich Point of Sale (POS) and Inventory Management web application built with **Next.js 15**, **React 19**, and **Supabase**. It is designed to streamline transactions, manage product stock in real-time, and provide insightful analytics. 
 
-First, run the development server:
+This project is built as a Progressive Web App (PWA) with a premium UI/UX, capable of being installed on desktops and mobile devices.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## ✨ Key Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- **🛍️ Point of Sale (POS) Terminal**: Fast and intuitive checkout process with cart management, dynamic discounts, and automatic subtotal/tax calculations.
+- **📦 Inventory Management**: Full CRUD capabilities for products. Track stock levels, set categories, and get visual indicators for low stock.
+- **📊 Dashboard & Analytics**: Interactive charts (Recharts) displaying daily/monthly revenue, transaction counts, and best-selling products.
+- **🎟️ Voucher & Discount System**: Manage promo codes with dynamic discounts (percentage or fixed amount) and usage limits.
+- **🖨️ Bluetooth Thermal Printer Support**: Native integration with Web Bluetooth API for seamless receipt printing directly from the browser.
+- **📄 Export & Reports**: Generate and download transaction history and sales reports in **Excel (.xlsx)** or **PDF** formats.
+- **🔐 Role-Based Authentication**: Secure login system via **Supabase Auth** with defined roles (Owner vs. Kasir).
+- **🌗 Dark / Light Mode**: Premium UI built with **Tailwind CSS** and **Shadcn UI** supporting modern aesthetic themes.
+- **📱 PWA Ready**: Installable on Android, iOS, and Desktop for a native app-like experience.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🛠️ Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Frontend**: Next.js 15 (App Router), React 19, TypeScript
+- **Styling**: Tailwind CSS, Shadcn UI, Framer Motion
+- **State Management**: Zustand
+- **Backend & Database**: Supabase (PostgreSQL, Auth, RLS)
+- **Icons & Visuals**: Lucide React, Recharts
+- **Utilities**: `xlsx`, `jspdf`, `jspdf-autotable`, `date-fns`
 
-## Learn More
+## 🚀 Getting Started
 
-To learn more about Next.js, take a look at the following resources:
+### Prerequisites
+- Node.js 18+ and npm/yarn/pnpm installed.
+- A [Supabase](https://supabase.com/) project.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Installation
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/Radityaaa04/pnb-pos.git
+   cd pnb-pos
+   ```
 
-## Deploy on Vercel
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. **Set up Environment Variables:**
+   Copy the `.env.example` file to `.env.local`:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Fill in your Supabase credentials in `.env.local`:
+   ```env
+   NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+4. **Database Setup:**
+   Run the SQL scripts located in the `supabase/migrations/` folder within your Supabase project's SQL Editor to generate the required tables (`profiles`, `products`, `transactions`, `vouchers`, etc.).
+
+5. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## 🔑 Demo Access
+
+For portfolio evaluation, you can try logging in with the following roles (assuming you have registered them in your Supabase project):
+
+- **Owner / Admin**
+  - Email: `admin@pnb.com`
+  - Password: `Ceper123`
+
+- **Kasir (Cashier)**
+  - Email: `kasir@pnb.com`
+  - Password: `Ceper123`
+
+## 👨‍💻 Developer
+
+Developed by **Raditya** ([@Radityaaa04](https://github.com/Radityaaa04))
+
+## 📄 License
+
+This project is open-source and available under the MIT License.
