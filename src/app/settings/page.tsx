@@ -62,7 +62,12 @@ export default function SettingsPage() {
 
     const fetchProfiles = async () => {
         const { data, error } = await supabase.from('profiles').select('*').order('created_at', { ascending: false });
-        if (data && !error) {
+        if (error) {
+            console.error("Gagal memuat daftar pengguna:", error);
+            toast.error("Gagal memuat daftar pengguna: " + error.message);
+            return;
+        }
+        if (data) {
             setProfiles(data);
         }
     };

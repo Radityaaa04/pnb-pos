@@ -47,46 +47,63 @@ export const useSyncStore = create<SyncStore>()(
         set({ isSyncing: true });
         let successCount = 0;
 
+        let failCount = 0;
+
         for (const tx of pendingTransactions) {
           try {
             const { error } = await supabase.from('transactions').insert([
               { total: tx.total, items_count: tx.items_count }
             ]);
 
-            if (!error) {
-              // Update stok untuk setiap item dalam transaksi offline
-              if (tx.items && tx.items.length > 0) {
-                for (const item of tx.items) {
-                  // Ambil stok terbaru dulu agar tidak tertimpa stok lama
-                  const { data: productData } = await supabase
-                    .from('products')
-                    .select('stock')
-                    .eq('id', item.id)
-                    .single();
+            if (error) {
+              console.error("Gagal sync transaksi:", tx.id, error);
+              failCount++;
+              continue;
+            }
 
-                  if (productData) {
-                    const newStock = productData.stock - item.quantity;
-                    if (newStock >= 0) {
-                      await supabase
-                        .from('products')
-                        .update({ stock: newStock })
-                        .eq('id', item.id);
+            // Update stok untuk setiap item dalam transaksi offline
+            if (tx.items && tx.items.length > 0) {
+              for (const item of tx.items) {
+                const { data: productData, error: fetchError } = await supabase
+                  .from('products')
+                  .select('stock')
+                  .eq('id', item.id)
+                  .single();
+
+                if (fetchError) {
+                  console.error("Gagal mengambil stok produk saat sync:", item.id, fetchError);
+                  continue;
+                }
+
+                if (productData) {
+                  const newStock = productData.stock - item.quantity;
+                  if (newStock >= 0) {
+                    const { error: updateError } = await supabase
+                      .from('products')
+                      .update({ stock: newStock })
+                      .eq('id', item.id);
+                    if (updateError) {
+                      console.error("Gagal update stok saat sync:", item.id, updateError);
                     }
                   }
                 }
               }
-
-              removePendingTransaction(tx.id);
-              successCount++;
             }
+
+            removePendingTransaction(tx.id);
+            successCount++;
           } catch (e) {
             console.error("Gagal sync transaksi:", tx.id, e);
+            failCount++;
           }
         }
 
         set({ isSyncing: false });
         if (successCount > 0) {
           toast.success(`${successCount} transaksi offline berhasil disinkronisasi!`);
+        }
+        if (failCount > 0) {
+          toast.error(`${failCount} transaksi gagal disinkronisasi. Akan dicoba lagi saat koneksi stabil.`);
         }
       },
     }),

@@ -16,11 +16,16 @@ export function LowStockNotifier() {
 
     // Check for already-low stock items on mount
     const checkInitialLowStock = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .select("name, stock")
         .lte("stock", LOW_STOCK_THRESHOLD)
         .gt("stock", 0);
+
+      if (error) {
+        console.error("Gagal memeriksa stok rendah:", error);
+        return;
+      }
 
       if (data && data.length > 0) {
         setTimeout(() => {

@@ -72,10 +72,17 @@ export default function POSPage() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError) {
+        console.error("Gagal mengambil user:", userError);
+        return;
+      }
       if (user) {
-        // Fetch name from profiles
-        const { data } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+        const { data, error: profileError } = await supabase.from("profiles").select("name").eq("id", user.id).single();
+        if (profileError) {
+          console.error("Gagal mengambil profil kasir:", profileError);
+          return;
+        }
         if (data) {
           setCashierName(data.name);
         }
@@ -126,7 +133,11 @@ export default function POSPage() {
           setProducts(cached.data);
           setLoading(false);
           // Tetap fetch di background untuk update data terbaru
-          supabase.from("products").select("*").then(({ data }) => {
+          supabase.from("products").select("*").then(({ data, error: bgError }) => {
+            if (bgError) {
+              console.error("Gagal memperbarui produk di background:", bgError);
+              return;
+            }
             if (data) {
               setProducts(data);
               localStorage.setItem("pnb_cached_products", JSON.stringify({ data, ts: Date.now() }));
@@ -246,51 +257,63 @@ export default function POSPage() {
           quantity: item.quantity,
           subtotal: item.price * item.quantity,
         }));
-        await supabase.from("transaction_items").insert(transactionItemsPayload);
+        const { error: itemsError } = await supabase.from("transaction_items").insert(transactionItemsPayload);
+        if (itemsError) {
+          console.error("Gagal menyimpan detail item transaksi:", itemsError);
+          toast.error("Detail item transaksi gagal disimpan: " + itemsError.message);
+        }
 
         // Update voucher used_count
         if (appliedVoucher) {
-          try {
-            await supabase
-              .from("vouchers")
-              .update({ used_count: appliedVoucher.used_count + 1 })
-              .eq("id", appliedVoucher.id);
-          } catch (err) {
-            console.error("Gagal update pemakaian voucher", err);
+          const { error: voucherUpdateError } = await supabase
+            .from("vouchers")
+            .update({ used_count: appliedVoucher.used_count + 1 })
+            .eq("id", appliedVoucher.id);
+          if (voucherUpdateError) {
+            console.error("Gagal update pemakaian voucher:", voucherUpdateError);
+            toast.error("Pemakaian voucher gagal diperbarui: " + voucherUpdateError.message);
           }
         }
 
         // Update stock di database + catat stock_logs
         for (const item of items) {
-          try {
-            const { data: productData } = await supabase
-              .from("products")
-              .select("stock, name")
-              .eq("id", item.id)
-              .single();
-            if (productData) {
-              const newStock = productData.stock - item.quantity;
-              if (newStock < 0) {
-                toast.warning(`Stok ${item.name} tidak mencukupi, stok tidak diperbarui.`);
-              } else {
-                await supabase
-                  .from("products")
-                  .update({ stock: newStock })
-                  .eq("id", item.id);
-                // Catat stock log
-                await supabase.from("stock_logs").insert([{
-                  product_id: item.id,
-                  product_name: productData.name,
-                  change_type: "sale",
-                  quantity: -item.quantity,
-                  stock_before: productData.stock,
-                  stock_after: newStock,
-                  note: `Terjual via POS (Transaksi #${transactionId.slice(0, 8)})`,
-                }]);
+          const { data: productData, error: fetchStockError } = await supabase
+            .from("products")
+            .select("stock, name")
+            .eq("id", item.id)
+            .single();
+          if (fetchStockError) {
+            console.error("Gagal mengambil stok produk:", fetchStockError);
+            toast.error(`Gagal mengambil stok ${item.name}: ${fetchStockError.message}`);
+            continue;
+          }
+          if (productData) {
+            const newStock = productData.stock - item.quantity;
+            if (newStock < 0) {
+              toast.warning(`Stok ${item.name} tidak mencukupi, stok tidak diperbarui.`);
+            } else {
+              const { error: stockUpdateError } = await supabase
+                .from("products")
+                .update({ stock: newStock })
+                .eq("id", item.id);
+              if (stockUpdateError) {
+                console.error("Gagal update stok:", stockUpdateError);
+                toast.error(`Gagal memperbarui stok ${item.name}: ${stockUpdateError.message}`);
+                continue;
+              }
+              const { error: logError } = await supabase.from("stock_logs").insert([{
+                product_id: item.id,
+                product_name: productData.name,
+                change_type: "sale",
+                quantity: -item.quantity,
+                stock_before: productData.stock,
+                stock_after: newStock,
+                note: `Terjual via POS (Transaksi #${transactionId.slice(0, 8)})`,
+              }]);
+              if (logError) {
+                console.error("Gagal mencatat log stok:", logError);
               }
             }
-          } catch (updateError) {
-            console.error("Gagal update stok:", updateError);
           }
         }
 
@@ -301,8 +324,10 @@ export default function POSPage() {
         setCashInput("");
         setPaymentMethod("cash"); // Reset ke tunai setelah transaksi selesai
         // Refresh produk agar stok terbaru muncul
-        const { data: updatedProducts } = await supabase.from("products").select("*");
-        if (updatedProducts) {
+        const { data: updatedProducts, error: refreshError } = await supabase.from("products").select("*");
+        if (refreshError) {
+          console.error("Gagal memperbarui daftar produk:", refreshError);
+        } else if (updatedProducts) {
           setProducts(updatedProducts);
           localStorage.setItem("pnb_cached_products", JSON.stringify({ data: updatedProducts, ts: Date.now() }));
         }
