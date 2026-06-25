@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/lib/utils";
+import { formatDateCompact } from "@/lib/format";
 import {
   Package,
   RefreshCw,
@@ -245,15 +246,6 @@ export default function InventoryPage() {
   const lowStockProducts = products.filter((p) => p.stock > 0 && p.stock <= 5);
   const outOfStockProducts = products.filter((p) => p.stock === 0);
 
-  const formatDate = (iso: string) => {
-    return new Date(iso).toLocaleString("id-ID", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
 
   const changeTypeLabel: Record<StockLog["change_type"], string> = {
     sale: "Penjualan",
@@ -526,7 +518,7 @@ export default function InventoryPage() {
                     {stockLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-muted/50 transition-colors">
                         <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                          {formatDate(log.created_at)}
+                          {formatDateCompact(log.created_at)}
                         </td>
                         <td className="px-4 py-3 font-medium">{log.product_name}</td>
                         <td className="px-4 py-3">

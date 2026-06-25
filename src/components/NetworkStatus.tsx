@@ -1,31 +1,12 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { useSyncStore } from "@/store/useSyncStore";
 import { WifiOff, Wifi, RefreshCw } from "lucide-react";
-
-function subscribe(callback: () => void) {
-  if (typeof window !== "undefined") {
-    window.addEventListener("online", callback);
-    window.addEventListener("offline", callback);
-    return () => {
-      window.removeEventListener("online", callback);
-      window.removeEventListener("offline", callback);
-    };
-  }
-  return () => { };
-}
-
-function getSnapshot() {
-  return typeof navigator !== "undefined" ? navigator.onLine : true;
-}
-
-function getServerSnapshot() {
-  return true;
-}
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
 
 export function NetworkStatus() {
-  const isOnline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isOnline = useOnlineStatus();
   const { pendingTransactions, syncOfflineTransactions, isSyncing } = useSyncStore();
 
   // Fix #32: Tunda hiding agar ada animasi fade-out setelah sinkronisasi selesai
