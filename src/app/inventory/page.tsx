@@ -136,7 +136,7 @@ export default function InventoryPage() {
       toast.error("Gagal memperbarui stok");
     } else {
       // Log the stock change
-      await supabase.from("stock_logs").insert([
+      const { error: logError } = await supabase.from("stock_logs").insert([
         {
           product_id: product.id,
           product_name: product.name,
@@ -151,7 +151,12 @@ export default function InventoryPage() {
         },
       ]);
 
-      toast.success("Stok berhasil diperbarui");
+      if (logError) {
+        console.error("Gagal mencatat riwayat perubahan stok:", logError);
+        toast.warning("Stok diperbarui, tetapi riwayat perubahan gagal dicatat.");
+      } else {
+        toast.success("Stok berhasil diperbarui");
+      }
       setProducts((prev) =>
         prev.map((p) => (p.id === id ? { ...p, stock: stockAfter } : p))
       );

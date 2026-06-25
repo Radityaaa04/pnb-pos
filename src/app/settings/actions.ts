@@ -69,6 +69,7 @@ export async function createUser(formData: FormData) {
      
      if (updateError) {
          console.error("Failed to update role:", updateError);
+         return { error: "User dibuat tetapi gagal mengatur role: " + updateError.message };
      }
   }
 

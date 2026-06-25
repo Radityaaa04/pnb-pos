@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
 import { Activity, CreditCard, DollarSign, Users, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ export default function DashboardPage() {
 
     if (error || !data) {
       console.error(error);
+      toast.error("Gagal memuat data dashboard" + (error?.message ? ": " + error.message : ""));
       setLoading(false);
       return;
     }
