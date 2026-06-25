@@ -2,11 +2,30 @@
 
 import { createClient } from "@/lib/supabase/server";
 
+const ALLOWED_ROLES = ["owner", "kasir"] as const;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_NAME_LENGTH = 100;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export async function createUser(formData: FormData) {
-  const email = formData.get("email") as string;
+  const email = (formData.get("email") as string)?.trim();
   const password = formData.get("password") as string;
-  const name = formData.get("name") as string;
+  const name = (formData.get("name") as string)?.trim();
   const role = formData.get("role") as string;
+
+  // Input validation
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return { error: "Invalid email address" };
+  }
+  if (!password || password.length < MIN_PASSWORD_LENGTH) {
+    return { error: `Password must be at least ${MIN_PASSWORD_LENGTH} characters` };
+  }
+  if (!name || name.length > MAX_NAME_LENGTH) {
+    return { error: "Name is required and must be under 100 characters" };
+  }
+  if (!ALLOWED_ROLES.includes(role as typeof ALLOWED_ROLES[number])) {
+    return { error: "Invalid role. Must be 'owner' or 'kasir'" };
+  }
 
   const supabase = await createClient();
 
