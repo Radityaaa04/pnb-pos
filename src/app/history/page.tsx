@@ -208,9 +208,16 @@ export default function HistoryPage() {
             ];
         });
 
+        const escapeCsvField = (field: string) => {
+            if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+                return `"${field.replace(/"/g, '""')}"`;
+            }
+            return field;
+        };
+
         const csvContent = [
-            headers.join(","),
-            ...rows.map(e => e.join(","))
+            headers.map(escapeCsvField).join(","),
+            ...rows.map(row => row.map(escapeCsvField).join(","))
         ].join("\n");
 
         const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });

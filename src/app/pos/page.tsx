@@ -72,10 +72,10 @@ export default function POSPage() {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
         // Fetch name from profiles
-        const { data } = await supabase.from("profiles").select("name").eq("id", session.user.id).single();
+        const { data } = await supabase.from("profiles").select("name").eq("id", user.id).single();
         if (data) {
           setCashierName(data.name);
         }

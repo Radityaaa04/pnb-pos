@@ -79,20 +79,22 @@ export default function LoginPage() {
                 disabled={loading}
               />
             </div>
-            <div className="bg-muted/50 p-3 rounded-md text-sm text-center border border-border/50">
-              <p className="text-muted-foreground mb-2">Coba gunakan akun ini (jika sudah didaftarkan):</p>
-              <div className="flex justify-around gap-2 text-left">
-                <div>
-                  <p className="font-mono font-bold text-xs mb-1">Owner / Admin:</p>
-                  <p className="font-mono font-medium text-xs">admin@pnb.com</p>
+            {process.env.NODE_ENV === "development" && (
+              <div className="bg-muted/50 p-3 rounded-md text-sm text-center border border-border/50">
+                <p className="text-muted-foreground mb-2">Demo accounts (development only):</p>
+                <div className="flex justify-around gap-2 text-left">
+                  <div>
+                    <p className="font-mono font-bold text-xs mb-1">Owner / Admin:</p>
+                    <p className="font-mono font-medium text-xs">admin@pnb.com</p>
+                  </div>
+                  <div>
+                    <p className="font-mono font-bold text-xs mb-1">Kasir:</p>
+                    <p className="font-mono font-medium text-xs">kasir@pnb.com</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-mono font-bold text-xs mb-1">Kasir:</p>
-                  <p className="font-mono font-medium text-xs">kasir@pnb.com</p>
-                </div>
+                <p className="font-mono font-medium text-xs mt-2 pt-2 border-t border-border/50">Password: Ceper123</p>
               </div>
-              <p className="font-mono font-medium text-xs mt-2 pt-2 border-t border-border/50">Password: Ceper123</p>
-            </div>
+            )}
           </CardContent>
           <CardFooter>
             <Button className="w-full" type="submit" disabled={loading}>
