@@ -1,8 +1,11 @@
 import React, { forwardRef } from "react";
 import { Product } from "@/store/useCartStore";
 import { formatRupiah } from "@/lib/utils";
+import { getStoreName, getReceiptFooter } from "@/lib/settings";
+import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 
-export type PaymentMethod = "cash" | "qris" | "transfer";
+import type { PaymentMethod } from "@/lib/constants";
+export type { PaymentMethod };
 
 interface ReceiptProps {
   items: (Product & { quantity: number })[];
@@ -14,12 +17,6 @@ interface ReceiptProps {
   cashierName?: string;
 }
 
-const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  cash: "Tunai",
-  qris: "QRIS",
-  transfer: "Transfer Bank",
-};
-
 const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
   ({ items, total, cashReceived, paymentMethod = "cash", voucherCode, discountAmount, cashierName }, ref) => {
     const date = new Date().toLocaleString("id-ID", {
@@ -27,14 +24,8 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(
       timeStyle: "short",
     });
 
-    const storeName =
-      typeof window !== "undefined"
-        ? (localStorage.getItem("settings_storeName") ?? "PNB POS")
-        : "PNB POS";
-    const receiptFooter =
-      typeof window !== "undefined"
-        ? (localStorage.getItem("settings_receiptFooter") ?? "Terima kasih telah berbelanja!")
-        : "Terima kasih telah berbelanja!";
+    const storeName = getStoreName();
+    const receiptFooter = getReceiptFooter();
 
     const isCash = paymentMethod === "cash";
     const methodLabel = PAYMENT_METHOD_LABELS[paymentMethod];

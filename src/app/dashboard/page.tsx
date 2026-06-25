@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect, useCallback, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Activity, CreditCard, DollarSign, Users, Loader2 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartConfig, ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { formatRupiah } from "@/lib/utils";
+import { useOnlineStatus } from "@/lib/hooks/useOnlineStatus";
+import { StatCard } from "@/components/StatCard";
 
 const chartConfig = {
   sales: {
@@ -15,21 +17,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-function subscribe(callback: () => void) {
-  if (typeof window === "undefined") return () => { };
-  window.addEventListener("online", callback);
-  window.addEventListener("offline", callback);
-  return () => {
-    window.removeEventListener("online", callback);
-    window.removeEventListener("offline", callback);
-  };
-}
-function getSnapshot() {
-  return typeof navigator !== "undefined" ? navigator.onLine : true;
-}
-function getServerSnapshot() {
-  return true;
-}
 
 interface Transaction {
   id: string;
@@ -44,7 +31,7 @@ interface ChartData {
 }
 
 export default function DashboardPage() {
-  const isOnline = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const isOnline = useOnlineStatus();
   const [loading, setLoading] = useState(true);
   const [totalIncome, setTotalIncome] = useState(0);
   const [totalTrx, setTotalTrx] = useState(0);
@@ -135,64 +122,49 @@ export default function DashboardPage() {
 
       {/* STAT CARDS */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pendapatan Live</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(totalIncome)}</div>
-            <p className="text-xs text-emerald-500 font-medium mt-1">Data aktual dari database</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Pendapatan Live"
+          value={formatRupiah(totalIncome)}
+          description={<span className="text-emerald-500 font-medium">Data aktual dari database</span>}
+          icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
+        />
 
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Transaksi</CardTitle>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalTrx}</div>
-            <p className="text-xs text-muted-foreground mt-1">Struk tercetak hari ini</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Total Transaksi"
+          value={totalTrx}
+          description="Struk tercetak hari ini"
+          icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+        />
 
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rata-rata Penjualan</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatRupiah(avgIncome)}</div>
-            <p className="text-xs text-muted-foreground mt-1">Per transaksi hari ini</p>
-          </CardContent>
-        </Card>
+        <StatCard
+          title="Rata-rata Penjualan"
+          value={formatRupiah(avgIncome)}
+          description="Per transaksi hari ini"
+          icon={<Activity className="h-4 w-4 text-muted-foreground" />}
+        />
 
-        <Card className="shadow-sm hover:shadow-md transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Status Server</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {isOnline ? (
-              <>
-                <div className="text-2xl font-bold text-emerald-600">Terhubung</div>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1 animate-pulse" />
-                  Supabase Real-time Aktif
-                </p>
-              </>
+        <StatCard
+          title="Status Server"
+          value={
+            isOnline
+              ? <span className="text-emerald-600">Terhubung</span>
+              : <span className="text-destructive">Offline</span>
+          }
+          description={
+            isOnline ? (
+              <span className="flex items-center">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mr-1 animate-pulse" />
+                Supabase Real-time Aktif
+              </span>
             ) : (
-              <>
-                <div className="text-2xl font-bold text-destructive">Offline</div>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center">
-                  <span className="w-2 h-2 rounded-full bg-destructive mr-1" />
-                  Tidak ada koneksi internet
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              <span className="flex items-center">
+                <span className="w-2 h-2 rounded-full bg-destructive mr-1" />
+                Tidak ada koneksi internet
+              </span>
+            )
+          }
+          icon={<Users className="h-4 w-4 text-muted-foreground" />}
+        />
       </div>
 
       {/* CHARTS & RECENT TRANSACTIONS */}

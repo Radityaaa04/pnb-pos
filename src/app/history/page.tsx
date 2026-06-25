@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatRupiah } from "@/lib/utils";
+import { formatDate } from "@/lib/format";
+import { PAYMENT_METHOD_LABELS, PaymentMethod } from "@/lib/constants";
+import { StatCard } from "@/components/StatCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -178,15 +181,6 @@ export default function HistoryPage() {
         setExpandedId((prev) => (prev === id ? null : id));
     };
 
-    const formatDate = (iso: string) => {
-        return new Date(iso).toLocaleString("id-ID", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        });
-    };
 
     const handleExportCSV = () => {
         if (filteredTransactions.length === 0) {
@@ -250,36 +244,24 @@ export default function HistoryPage() {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Pendapatan</CardTitle>
-                        <Banknote className="w-4 h-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold text-primary">{formatRupiah(totalRevenue)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">{filteredTransactions.length} transaksi</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Rata-rata Transaksi</CardTitle>
-                        <ArrowLeftRight className="w-4 h-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{formatRupiah(avgTransaction)}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Per transaksi</p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Item Terjual</CardTitle>
-                        <ShoppingBag className="w-4 h-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-2xl font-bold">{totalItems}</p>
-                        <p className="text-xs text-muted-foreground mt-1">Unit produk</p>
-                    </CardContent>
-                </Card>
+                <StatCard
+                    title="Total Pendapatan"
+                    value={<span className="text-primary">{formatRupiah(totalRevenue)}</span>}
+                    description={`${filteredTransactions.length} transaksi`}
+                    icon={<Banknote className="w-4 h-4 text-muted-foreground" />}
+                />
+                <StatCard
+                    title="Rata-rata Transaksi"
+                    value={formatRupiah(avgTransaction)}
+                    description="Per transaksi"
+                    icon={<ArrowLeftRight className="w-4 h-4 text-muted-foreground" />}
+                />
+                <StatCard
+                    title="Total Item Terjual"
+                    value={totalItems}
+                    description="Unit produk"
+                    icon={<ShoppingBag className="w-4 h-4 text-muted-foreground" />}
+                />
             </div>
 
             {/* Filters */}
@@ -382,11 +364,7 @@ export default function HistoryPage() {
                                                                     : "border-purple-500 text-purple-600"
                                                             }`}
                                                         >
-                                                            {trx.payment_method === "cash"
-                                                                ? "Tunai"
-                                                                : trx.payment_method === "qris"
-                                                                ? "QRIS"
-                                                                : "Transfer"}
+                                                            {PAYMENT_METHOD_LABELS[trx.payment_method as PaymentMethod]}
                                                         </Badge>
                                                         {trx.voucher_code && (
                                                             <Badge variant="outline" className="text-xs border-green-500 text-green-600">

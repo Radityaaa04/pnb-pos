@@ -23,7 +23,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { getStoreName, getReceiptFooter } from "@/lib/settings";
+import { PAYMENT_METHOD_LABELS } from "@/lib/constants";
 
 const CATEGORIES = ["Semua", "Minuman", "Makanan", "Snack"];
 
@@ -92,8 +93,8 @@ export default function POSPage() {
   const handlePrintBluetooth = async () => {
     if (!paidTransaction) return;
     try {
-      const storeName = typeof window !== "undefined" ? (localStorage.getItem("settings_storeName") ?? "PNB POS") : "PNB POS";
-      const footerMessage = typeof window !== "undefined" ? (localStorage.getItem("settings_receiptFooter") ?? "Terima kasih telah berbelanja!") : "Terima kasih!";
+      const storeName = getStoreName();
+      const footerMessage = getReceiptFooter();
       
       const receiptData = {
         storeName,
@@ -104,7 +105,7 @@ export default function POSPage() {
         discount: paidTransaction.discountAmount || 0,
         voucherCode: paidTransaction.voucherCode || undefined,
         total: paidTransaction.total,
-        paymentMethod: paidTransaction.paymentMethod === "cash" ? "Tunai" : paidTransaction.paymentMethod === "qris" ? "QRIS" : "Transfer Bank",
+        paymentMethod: PAYMENT_METHOD_LABELS[paidTransaction.paymentMethod],
         cashReceived: paidTransaction.cashReceived,
         footerMessage
       };
@@ -751,227 +752,7 @@ export default function POSPage() {
 
         {/* KERANJANG */}
         <div className="w-full lg:w-[400px] flex-shrink-0 h-[45vh] lg:h-auto bg-card border shadow-sm rounded-2xl flex flex-col overflow-hidden">
-          <div className="p-5 border-b flex items-center justify-between bg-muted/10">
-            <h2 className="text-xl font-bold flex items-center gap-2">
-              <ShoppingCart className="w-6 h-6" />
-              Keranjang
-            </h2>
-            <div className="flex items-center gap-2">
-              <span className="bg-primary/10 text-primary text-sm font-bold px-3 py-1 rounded-full">
-                {items.reduce((acc, item) => acc + item.quantity, 0)} item
-              </span>
-              {/* Fix #34: Tombol hapus semua */}
-              {items.length > 0 && (
-                <button
-                  onClick={handleClearCart}
-                  className="text-muted-foreground hover:text-destructive transition-colors p-1 rounded"
-                  title="Kosongkan keranjang"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
-            </div>
-          </div>
-
-          <ScrollArea className="flex-1 p-5">
-            {items.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-60 pt-20">
-                <ShoppingCart className="w-16 h-16 mb-4" />
-                <p className="text-lg">Keranjang kosong</p>
-                <p className="text-sm mt-1">Klik menu untuk menambahkan</p>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-5">
-                {items.map((item) => (
-                  <div key={item.id} className="flex gap-4 items-center">
-                    <div className="flex-1">
-                      <h4 className="font-bold leading-tight">{item.name}</h4>
-                      <p className="text-primary font-semibold text-sm mt-1">{formatRupiah(item.price)}</p>
-                    </div>
-
-                    <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-1 shadow-inner">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-lg bg-background shadow-sm hover:bg-destructive hover:text-destructive-foreground transition-colors"
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
-                      >
-                        <Minus className="w-5 h-5" />
-                      </Button>
-                      <span className="w-6 text-center font-bold text-lg">{item.quantity}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-10 w-10 rounded-lg bg-background shadow-sm hover:bg-primary hover:text-primary-foreground transition-colors"
-                        onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
-                      >
-                        <Plus className="w-5 h-5" />
-                      </Button>
-                    </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-10 w-10 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-lg transition-colors"
-                      onClick={() => removeItem(item.id)}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </ScrollArea>
-
-          <div className="p-5 border-t bg-muted/20 space-y-4">
-            {/* Voucher Section */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Voucher Diskon
-              </label>
-              {appliedVoucher ? (
-                <div className="flex items-center justify-between bg-green-500/10 border border-green-500/20 text-green-700 dark:text-green-400 px-3 py-2 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Tag className="w-4 h-4" />
-                    <span className="font-semibold text-sm">{appliedVoucher.code}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold bg-green-500/20 px-2 py-0.5 rounded">
-                      {appliedVoucher.discount_type === "percent" ? `${appliedVoucher.discount_value}%` : formatRupiah(appliedVoucher.discount_value)}
-                    </span>
-                    <button onClick={removeVoucher} className="hover:bg-green-500/20 p-1 rounded-full transition-colors">
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Masukkan kode..."
-                    value={voucherCodeInput}
-                    onChange={(e) => setVoucherCodeInput(e.target.value)}
-                    className="uppercase h-10"
-                    disabled={applyingVoucher}
-                  />
-                  <Button
-                    onClick={handleApplyVoucher}
-                    disabled={!voucherCodeInput || applyingVoucher}
-                    className="h-10 px-4"
-                    variant="secondary"
-                  >
-                    {applyingVoucher ? <Loader2 className="w-4 h-4 animate-spin" /> : "Gunakan"}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Subtotal & Total */}
-            <div className="space-y-2">
-              <div className="flex justify-between text-muted-foreground">
-                <span className="font-medium">Subtotal</span>
-                <span className="font-medium">{formatRupiah(subtotal)}</span>
-              </div>
-              {appliedVoucher && (
-                <div className="flex justify-between text-green-600 dark:text-green-400 text-sm">
-                  <span className="font-medium">Diskon ({appliedVoucher.code})</span>
-                  <span className="font-medium">-{formatRupiah(discountAmount)}</span>
-                </div>
-              )}
-              <div className="flex justify-between font-black text-2xl pt-2 border-t">
-                <span>Total</span>
-                <span className="text-primary">{formatRupiah(total)}</span>
-              </div>
-            </div>
-
-            {/* Pilih Metode Pembayaran */}
-            <div className="space-y-2">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Metode Pembayaran
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {PAYMENT_METHODS.map((method) => {
-                  const isActive = paymentMethod === method.value;
-                  return (
-                    <button
-                      key={method.value}
-                      onClick={() => {
-                        setPaymentMethod(method.value);
-                        setCashInput("");
-                      }}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 py-3 px-2 text-center transition-all ${
-                        isActive
-                          ? "border-primary bg-primary/5 text-primary shadow-sm"
-                          : "border-muted-foreground/20 hover:border-primary/40 text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {method.icon}
-                      <span className="text-xs font-bold leading-tight">{method.label}</span>
-                      <span className="text-[10px] leading-tight opacity-70 hidden sm:block">{method.desc}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Input Tunai — hanya muncul jika metode = cash */}
-            {paymentMethod === "cash" && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                  Uang Diterima
-                </label>
-                <Input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Masukkan nominal tunai..."
-                  className="h-11 text-right font-bold text-lg"
-                  value={cashInput}
-                  onChange={(e) => {
-                    const raw = e.target.value.replace(/\D/g, "");
-                    setCashInput(raw ? parseInt(raw, 10).toLocaleString("id-ID") : "");
-                  }}
-                />
-                {change !== null && (
-                  <div className="flex justify-between text-emerald-600 font-bold text-sm pt-1">
-                    <span>Kembalian</span>
-                    <span>{formatRupiah(change)}</span>
-                  </div>
-                )}
-                {cashInput && change === null && (
-                  <p className="text-destructive text-xs font-medium">
-                    Uang kurang {formatRupiah(total - cashAmount)}
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Info QRIS / Transfer */}
-            {paymentMethod !== "cash" && (
-              <div className="rounded-xl bg-primary/5 border border-primary/20 px-4 py-3 text-sm text-center">
-                <p className="font-semibold text-primary flex items-center justify-center gap-2">
-                  {paymentMethod === "qris"
-                    ? <><QrCode className="w-4 h-4" /> Scan QRIS</>
-                    : <><Building2 className="w-4 h-4" /> Transfer Bank</>}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {paymentMethod === "qris"
-                    ? "Persilakan pelanggan scan QR, lalu tekan Bayar"
-                    : "Konfirmasi transfer dari pelanggan, lalu tekan Bayar"}
-                </p>
-              </div>
-            )}
-
-            <Button
-              className="w-full h-14 text-lg font-bold rounded-xl shadow-lg transition-transform hover:scale-[1.02] active:scale-95"
-              disabled={!isPayable}
-              onClick={handlePayment}
-            >
-              {paying ? (
-                <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> MEMPROSES...</>
-              ) : (
-                `BAYAR ${formatRupiah(total)}`
-              )}
-            </Button>
-          </div>
+          {keranjangContent}
         </div>
       </div>
 
@@ -1004,11 +785,7 @@ export default function POSPage() {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Metode</span>
                 <span className="font-semibold capitalize">
-                  {paidTransaction.paymentMethod === "cash"
-                    ? "Tunai"
-                    : paidTransaction.paymentMethod === "qris"
-                    ? "QRIS"
-                    : "Transfer Bank"}
+                  {PAYMENT_METHOD_LABELS[paidTransaction.paymentMethod]}
                 </span>
               </div>
               {/* Voucher */}
